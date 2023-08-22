@@ -1,0 +1,70 @@
+import re
+import collections
+import itertools
+
+# English letter frequencies
+letter_frequencies = {
+    'a': 0.08167, 'b': 0.01492, 'c': 0.02782, 'd': 0.04253, 'e': 0.12702,
+    'f': 0.02228, 'g': 0.02015, 'h': 0.06094, 'i': 0.06966, 'j': 0.00153,
+    'k': 0.00772, 'l': 0.04025, 'm': 0.02406, 'n': 0.06749, 'o': 0.07507,
+    'p': 0.01929, 'q': 0.00095, 'r': 0.05987, 's': 0.06327, 't': 0.09056,
+    'u': 0.02758, 'v': 0.00978, 'w': 0.02360, 'x': 0.00150, 'y': 0.01974,
+    'z': 0.00074
+}
+
+def decrypt(ciphertext, key):
+    # Decrypt the ciphertext using the provided key
+    decrypted_text = ''
+    for char in ciphertext:
+        if char.isalpha():
+            decrypted_text += key[char]
+        else:
+            decrypted_text += char
+    return decrypted_text
+
+def calculate_fitness(text):
+    # Calculate the fitness of the text based on English letter frequencies
+    text = text.lower()
+    frequency_counter = collections.Counter(text)
+    fitness = 0
+    for letter, expected_frequency in letter_frequencies.items():
+        observed_frequency = frequency_counter.get(letter, 0) / len(text)
+        fitness += abs(expected_frequency - observed_frequency)
+    return fitness
+
+def generate_key(ciphertext, candidate_key):
+    # Generate a new key by swapping two letters in the candidate key
+    swap_positions = list(itertools.combinations(candidate_key, 2))
+    keys = []
+    for position in swap_positions:
+        key_copy = candidate_key.copy()
+        key_copy[position[0]], key_copy[position[1]] = key_copy[position[1]], key_copy[position[0]]
+        keys.append(key_copy)
+    return keys
+
+def main():
+    ciphertext = input("Enter the ciphertext: ").lower()
+    candidate_key = {c: c for c in ciphertext if c.isalpha()}
+    best_key = candidate_key.copy()
+    best_fitness = calculate_fitness(decrypt(ciphertext, best_key))
+
+    iterations = 0
+    while True:
+        iterations += 1
+        keys_to_try = generate_key(ciphertext, candidate_key)
+        for key in keys_to_try:
+            decrypted = decrypt(ciphertext, key)
+            fitness = calculate_fitness(decrypted)
+            if fitness < best_fitness:
+                best_fitness = fitness
+                best_key = key
+                print(f"Iteration {iterations}: Fitness = {fitness:.6f}, Key = {best_key}")
+        if best_fitness == 0:
+            break
+
+    top_plaintexts = decrypt(ciphertext, best_key)
+    print("\nTop plaintexts:")
+    print(top_plaintexts)
+
+if __name__ == "__main__":
+    main()
